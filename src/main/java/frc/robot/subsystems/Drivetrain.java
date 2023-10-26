@@ -32,8 +32,6 @@ public class Drivetrain extends DashboardedSubsystem {
 
     private final Gyro gyro;
 
-    private SwerveModuleState[] states;
-
     public Drivetrain(SwerveModule frontLeft, SwerveModule frontRight, SwerveModule backLeft, SwerveModule backRight,
                       Gyro gyro) {
         super(namespaceName);
@@ -46,14 +44,30 @@ public class Drivetrain extends DashboardedSubsystem {
         this.gyro = gyro;
     }
 
-    public void drive(Supplier<Double> xSpeed, Supplier<Double> ySpeed, Supplier<Double> rotationSpeed) {
-        ChassisSpeeds speeds = new ChassisSpeeds(xSpeed.get(), ySpeed.get(), rotationSpeed.get());
-        states = kinematics.toSwerveModuleStates(speeds, CENTER_OF_ROBOT);
+    @Override
+    public void periodic() {
+        super.periodic();
+    }
+
+    public void drive(Supplier<Double> xSpeed, Supplier<Double> ySpeed, Supplier<Double> rotationSpeed,
+                      boolean fieldRelative, boolean usePID) {
+        ChassisSpeeds speeds;
+        if (fieldRelative) {
+            speeds = ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed.get(), ySpeed.get(),
+                    rotationSpeed.get(), gyro.getRotation2d());
+        } else {
+            speeds = new ChassisSpeeds(xSpeed.get(), ySpeed.get(), rotationSpeed.get());
+        }
+        SwerveModuleState[] states = kinematics.toSwerveModuleStates(speeds, CENTER_OF_ROBOT);
         SwerveDriveKinematics.desaturateWheelSpeeds(states, MAX_SPEED_METERS_PER_SECONDS);
-        frontLeft.set(states[0], false);
-        frontRight.set(states[1], false);
-        backLeft.set(states[2], false);
-        backRight.set(states[3], false);
+        frontLeft.set(states[0], usePID);
+        frontRight.set(states[1], usePID);
+        backLeft.set(states[2], usePID);
+        backRight.set(states[3], usePID);
+    }
+
+    public void resetGyro() {
+        gyro.reset();
     }
 
     @Override

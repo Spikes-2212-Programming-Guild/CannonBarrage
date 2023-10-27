@@ -11,7 +11,8 @@ public abstract class SwerveDrivetrain extends DashboardedSubsystem {
         super(namespace);
     }
 
-    public abstract void drive(Supplier<Double> xSpeed, Supplier<Double> ySpeed, Supplier<Double> rotationSpeed);
+    public abstract void drive(Supplier<Double> xSpeed, Supplier<Double> ySpeed, Supplier<Double> rotationSpeed,
+               boolean fieldRelative, boolean usePID);
 
     public abstract void stop();
 

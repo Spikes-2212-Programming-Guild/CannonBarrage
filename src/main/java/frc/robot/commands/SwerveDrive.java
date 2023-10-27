@@ -11,19 +11,23 @@ public class SwerveDrive extends CommandBase {
     private final Supplier<Double> xSpeed;
     private final Supplier<Double> ySpeed;
     private final Supplier<Double> rotationSpeed;
+    private final boolean fieldRelative;
+    private final boolean usePID;
 
     public SwerveDrive(SwerveDrivetrain drivetrain, Supplier<Double> xSpeed, Supplier<Double> ySpeed,
-                       Supplier<Double> rotationSpeed) {
+                       Supplier<Double> rotationSpeed, boolean fieldRelative, boolean usePID) {
         addRequirements(drivetrain);
         this.drivetrain = drivetrain;
         this.xSpeed = xSpeed;
         this.ySpeed = ySpeed;
         this.rotationSpeed = rotationSpeed;
+        this.fieldRelative = fieldRelative;
+        this.usePID = usePID;
     }
 
     @Override
     public void execute() {
-        drivetrain.drive(xSpeed, ySpeed, rotationSpeed);
+        drivetrain.drive(xSpeed, ySpeed, rotationSpeed, fieldRelative, usePID);
     }
 
     @Override

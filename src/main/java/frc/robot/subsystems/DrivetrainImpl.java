@@ -1,16 +1,10 @@
 package frc.robot.subsystems;
 
 import com.spikes2212.command.DashboardedSubsystem;
-import com.spikes2212.util.Limelight;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.*;
-import edu.wpi.first.networktables.NetworkTable;
-import edu.wpi.first.networktables.NetworkTableEntry;
-import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.NetworkTableValue;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.interfaces.Gyro;
@@ -30,7 +24,7 @@ public class DrivetrainImpl extends DashboardedSubsystem implements Drivetrain {
 
     public static final double MAX_SPEED_METERS_PER_SECONDS = 0;
 
-    private static final String namespaceName = "drivetrain";
+    private static final String NAMESPACE_NAME = "drivetrain";
 
     private final SwerveModule frontLeft;
     private final SwerveModule frontRight;
@@ -44,14 +38,14 @@ public class DrivetrainImpl extends DashboardedSubsystem implements Drivetrain {
     private final SwerveDrivePoseEstimator poseEstimator;
 
     private final TheBetterLimelight limelight;
-    private NetworkTableValue tl;
-    private NetworkTableValue cl;
+    private NetworkTableValue targetingLatency;
+    private NetworkTableValue captureLatency;
 
     private Pose2d estimatedVisionPose;
 
     public DrivetrainImpl(SwerveModule frontLeft, SwerveModule frontRight, SwerveModule backLeft, SwerveModule backRight,
                           Gyro gyro) {
-        super(namespaceName);
+        super(NAMESPACE_NAME);
         this.frontLeft = frontLeft;
         this.frontRight = frontRight;
         this.backLeft = backLeft;
@@ -68,10 +62,10 @@ public class DrivetrainImpl extends DashboardedSubsystem implements Drivetrain {
                 },
                 new Pose2d());
         limelight = new TheBetterLimelight();
-        tl = limelight.getValue("tl");
-        cl = limelight.getValue("cl");
+        targetingLatency = limelight.getValue("tl");
+        captureLatency = limelight.getValue("cl");
         poseEstimator.addVisionMeasurement(estimatedVisionPose,
-                Timer.getFPGATimestamp() - (tl.getDouble() / 1000.0) - (cl.getDouble() / 1000.0));
+                Timer.getFPGATimestamp() - (targetingLatency.getDouble() / 1000.0) - (captureLatency.getDouble() / 1000.0));
     }
 
     @Override

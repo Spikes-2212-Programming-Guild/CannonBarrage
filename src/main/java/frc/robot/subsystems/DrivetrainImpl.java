@@ -20,7 +20,7 @@ import java.util.function.Supplier;
 
 public class DrivetrainImpl extends DashboardedSubsystem implements Drivetrain {
     // https://cdn.discordapp.com/attachments/927272978356510721/1167115100117807264/uwuyd99s0cub1.png?ex=654cf3a3&is=653a7ea3&hm=4fd387e2c5dbac2377e7a6c69bceb3218edb077aaeb6685f592d95a89ef7923c&
-    public static final Translation2d FRONT_LEFT_WHEEL_POSITION = new Translation2d(0, 0);
+    public static final Translation2d FRONT_LEFT_WHEEL_POSITION = new Translation2d(0, 0); // @TODO find positions
     public static final Translation2d FRONT_RIGHT_WHEEL_POSITION = new Translation2d(0, 0);
     public static final Translation2d BACK_LEFT_WHEEL_POSITION = new Translation2d(0, 0);
     public static final Translation2d BACK_RIGHT_WHEEL_POSITION = new Translation2d(0, 0);

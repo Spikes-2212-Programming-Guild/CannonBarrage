@@ -62,16 +62,19 @@ public class DrivetrainImpl extends DashboardedSubsystem implements Drivetrain {
                 },
                 new Pose2d()); // @TODO check start position
         limelight = new TheBetterLimelight();
-        targetingLatency = limelight.getValue("tl");
-        captureLatency = limelight.getValue("cl");
-        poseEstimator.addVisionMeasurement(estimatedVisionPose,
-                Timer.getFPGATimestamp() - (targetingLatency.getDouble() / 1000.0) - (captureLatency.getDouble() / 1000.0));
     }
 
     @Override
     public void periodic() {
         super.periodic();
         estimatedVisionPose = limelight.getRobotPose().toPose2d();
+        targetingLatency = limelight.getValue("tl");
+        captureLatency = limelight.getValue("cl");
+        if (estimatedVisionPose != null) {
+            poseEstimator.addVisionMeasurement(estimatedVisionPose,
+                    Timer.getFPGATimestamp() - (targetingLatency.getDouble() / 1000.0) -
+                            (captureLatency.getDouble() / 1000.0));
+        }
         poseEstimator.update(gyro.getRotation2d(), new SwerveModulePosition[]{
                 frontLeft.getPosition(),
                 frontRight.getPosition(),

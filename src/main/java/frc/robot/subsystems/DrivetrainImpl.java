@@ -37,9 +37,9 @@ public class DrivetrainImpl extends DashboardedSubsystem implements Drivetrain {
     private final SwerveModule backLeft;
     private final SwerveModule backRight;
 
-    private final SwerveDriveKinematics kinematics;
-
     private final Gyro gyro;
+
+    private final SwerveDriveKinematics kinematics;
 
     private final SwerveDrivePoseEstimator poseEstimator;
 

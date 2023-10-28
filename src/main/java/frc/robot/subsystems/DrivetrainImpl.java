@@ -88,7 +88,7 @@ public class DrivetrainImpl extends DashboardedSubsystem implements Drivetrain {
         ChassisSpeeds speeds;
         if (fieldRelative) {
             speeds = ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed.get(), ySpeed.get(),
-                    rotationSpeed.get(), gyro.getRotation2d());
+                    rotationSpeed.get(), estimatedVisionPose.getRotation());
         } else {
             speeds = new ChassisSpeeds(xSpeed.get(), ySpeed.get(), rotationSpeed.get());
         }

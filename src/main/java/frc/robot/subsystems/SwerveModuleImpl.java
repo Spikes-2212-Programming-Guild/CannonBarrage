@@ -2,18 +2,22 @@ package frc.robot.subsystems;
 
 import com.ctre.phoenix.sensors.AbsoluteSensorRange;
 import com.ctre.phoenix.sensors.CANCoder;
+import com.ctre.phoenix.sensors.SensorInitializationStrategy;
 import com.revrobotics.CANSparkMax;
 import com.spikes2212.command.DashboardedSubsystem;
 import com.spikes2212.control.FeedForwardController;
 import com.spikes2212.control.FeedForwardSettings;
 import com.spikes2212.control.PIDSettings;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 
 public class SwerveModuleImpl extends DashboardedSubsystem implements SwerveModule {
 
     private static final int PID_SLOT = 0;
     private static final double STEERING_GEAR_RATIO = 12.8;
+    private static final double DRIVING_GEAR_RATIO = 6.12;
+    private static final double WHEEL_CIRCUMFERENCE_METERS = 4*2.54*0.01*Math.PI;
     private final CANSparkMax driveController;
     private final CANSparkMax turnController;
     private final CANCoder absoluteEncoder;
@@ -45,6 +49,7 @@ public class SwerveModuleImpl extends DashboardedSubsystem implements SwerveModu
         driveController.getPIDController().setP(drivePIDSettings.getkP());
         driveController.getPIDController().setI(drivePIDSettings.getkI());
         driveController.getPIDController().setD(drivePIDSettings.getkD());
+        driveController.getEncoder().setPositionConversionFactor((1/DRIVING_GEAR_RATIO)*WHEEL_CIRCUMFERENCE_METERS);
     }
 
     private void configureTurnController() {
@@ -56,22 +61,23 @@ public class SwerveModuleImpl extends DashboardedSubsystem implements SwerveModu
     private void configureAbsoluteEncoder() {
         absoluteEncoder.configFactoryDefault();
         absoluteEncoder.configMagnetOffset(offset);
-        absoluteEncoder.configAbsoluteSensorRange(AbsoluteSensorRange.Signed_PlusMinus180);
+        absoluteEncoder.configAbsoluteSensorRange(AbsoluteSensorRange.Unsigned_0_to_360);
+        absoluteEncoder.configSensorInitializationStrategy(SensorInitializationStrategy.BootToAbsolutePosition);
     }
 
     private void configureRelativeEncoder() {
         turnController.getEncoder().setPositionConversionFactor((1 / STEERING_GEAR_RATIO) * 180);
-        turnController.getEncoder().setPosition(getAngle());
+        turnController.getEncoder().setPosition(getAbsoluteAngle());
     }
 
     @Override
     public void set(SwerveModuleState state, boolean usePID) {
-        state = SwerveModuleState.optimize(state, Rotation2d.fromDegrees(absoluteEncoder.getAbsolutePosition()));
+        state = optimize(state, Rotation2d.fromDegrees(getRelativeAngle()));
         setAngle(state.angle.getDegrees());
         setSpeed(state.speedMetersPerSecond, usePID);
     }
 
-    //angle between -180 and 180
+    //angle between 0 and 360
     private void setAngle(double angle) {
         configureTurnController();
         turnController.getPIDController().setReference(angle, CANSparkMax.ControlType.kPosition, PID_SLOT);
@@ -81,20 +87,81 @@ public class SwerveModuleImpl extends DashboardedSubsystem implements SwerveModu
     private void setSpeed(double speed, boolean usePID) {
         if (usePID) {
             configureDriveController();
+            driveFeedForwardController.setGains(driveFeedForwardSettings.getkS(), driveFeedForwardSettings.getkV(),
+                    driveFeedForwardSettings.getkA(), driveFeedForwardSettings.getkG());
             double feedForward = driveFeedForwardController.calculate(speed);
             driveController.getPIDController().setReference(speed, CANSparkMax.ControlType.kVelocity, PID_SLOT,
                     feedForward);
-        } else {
-            driveController.set(speed / DrivetrainImpl.MAX_SPEED);
         }
+        else driveController.set(speed / DrivetrainImpl.MAX_SPEED);
     }
 
     @Override
-    public double getAngle() {
+    public double getAbsoluteAngle() {
         return absoluteEncoder.getAbsolutePosition();
+    }
+
+    public double getRelativeAngle() {
+        return turnController.getEncoder().getPosition();
     }
 
     @Override
     public void configureDashboard() {
+    }
+
+    @Override
+    public SwerveModulePosition getPosition() {
+        return new SwerveModulePosition(driveController.getEncoder().getPosition(),
+                Rotation2d.fromDegrees(getAbsoluteAngle()));
+    }
+
+    /**
+     * Minimize the change in heading the desired swerve module state would require by potentially
+     * reversing the direction the wheel spins. Customized from WPILib's version to include placing
+     * in appropriate scope for CTRE onboard control.
+     * Credit to team #364
+     *
+     * @param desiredState The desired state.
+     * @param currentAngle The current module angle.
+     */
+    private static SwerveModuleState optimize(SwerveModuleState desiredState, Rotation2d currentAngle) {
+        double targetAngle = placeInAppropriate0To360Scope(currentAngle.getDegrees(), desiredState.angle.getDegrees());
+        double targetSpeed = desiredState.speedMetersPerSecond;
+        double delta = targetAngle - currentAngle.getDegrees();
+        if (Math.abs(delta) > 90){
+            targetSpeed = -targetSpeed;
+            targetAngle = delta > 90 ? (targetAngle -= 180) : (targetAngle += 180);
+        }
+        return new SwerveModuleState(targetSpeed, Rotation2d.fromDegrees(targetAngle));
+    }
+
+    /**
+     * @param scopeReference Current Angle
+     * @param newAngle Target Angle
+     * @return Closest angle within scope
+     */
+    private static double placeInAppropriate0To360Scope(double scopeReference, double newAngle) {
+        double lowerBound;
+        double upperBound;
+        double lowerOffset = scopeReference % 360;
+        if (lowerOffset >= 0) {
+            lowerBound = scopeReference - lowerOffset;
+            upperBound = scopeReference + (360 - lowerOffset);
+        } else {
+            upperBound = scopeReference - lowerOffset;
+            lowerBound = scopeReference - (360 + lowerOffset);
+        }
+        while (newAngle < lowerBound) {
+            newAngle += 360;
+        }
+        while (newAngle > upperBound) {
+            newAngle -= 360;
+        }
+        if (newAngle - scopeReference > 180) {
+            newAngle -= 360;
+        } else if (newAngle - scopeReference < -180) {
+            newAngle += 360;
+        }
+        return newAngle;
     }
 }

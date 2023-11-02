@@ -19,7 +19,7 @@ public class SwerveModuleImpl extends DashboardedSubsystem implements SwerveModu
     private static final double DRIVING_GEAR_RATIO = 6.12;
     private static final double WHEEL_DIAMETER_IN_INCHES = 4;
     private static final double INCHES_TO_METERS = 0.0254;
-    private static final double WHEEL_CIRCUMFERENCE_METERS = WHEEL_DIAMETER_IN_INCHES*INCHES_TO_METERS*Math.PI;
+    private static final double WHEEL_CIRCUMFERENCE_METERS = WHEEL_DIAMETER_IN_INCHES * INCHES_TO_METERS * Math.PI;
 
     private final CANSparkMax driveController;
     private final CANSparkMax turnController;

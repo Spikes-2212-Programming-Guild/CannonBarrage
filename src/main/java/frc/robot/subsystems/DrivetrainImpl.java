@@ -1,6 +1,7 @@
 package frc.robot.subsystems;
 
 import com.spikes2212.command.DashboardedSubsystem;
+import edu.wpi.first.apriltag.AprilTag;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -12,8 +13,9 @@ import frc.robot.util.TheBetterLimelight;
 
 import java.util.function.Supplier;
 
+// https://cdn.discordapp.com/attachments/927272978356510721/1167115100117807264/uwuyd99s0cub1.png?ex=654cf3a3&is=653a7ea3&hm=4fd387e2c5dbac2377e7a6c69bceb3218edb077aaeb6685f592d95a89ef7923c&
 public class DrivetrainImpl extends DashboardedSubsystem implements Drivetrain {
-    // https://cdn.discordapp.com/attachments/927272978356510721/1167115100117807264/uwuyd99s0cub1.png?ex=654cf3a3&is=653a7ea3&hm=4fd387e2c5dbac2377e7a6c69bceb3218edb077aaeb6685f592d95a89ef7923c&
+
     public static final Translation2d FRONT_LEFT_WHEEL_POSITION = new Translation2d(0, 0); // @TODO find positions
     public static final Translation2d FRONT_RIGHT_WHEEL_POSITION = new Translation2d(0, 0);
     public static final Translation2d BACK_LEFT_WHEEL_POSITION = new Translation2d(0, 0);
@@ -38,10 +40,6 @@ public class DrivetrainImpl extends DashboardedSubsystem implements Drivetrain {
     private final SwerveDrivePoseEstimator poseEstimator;
 
     private final TheBetterLimelight limelight;
-    private NetworkTableValue targetingLatency;
-    private NetworkTableValue captureLatency;
-
-    private Pose2d estimatedVisionPose;
 
     public DrivetrainImpl(SwerveModule frontLeft, SwerveModule frontRight, SwerveModule backLeft, SwerveModule backRight,
                           Gyro gyro) {
@@ -53,34 +51,37 @@ public class DrivetrainImpl extends DashboardedSubsystem implements Drivetrain {
         this.kinematics = new SwerveDriveKinematics(FRONT_LEFT_WHEEL_POSITION, FRONT_RIGHT_WHEEL_POSITION,
                 BACK_LEFT_WHEEL_POSITION, BACK_RIGHT_WHEEL_POSITION);
         this.gyro = gyro;
-        this.poseEstimator = new SwerveDrivePoseEstimator(kinematics, gyro.getRotation2d(),
+        limelight = new TheBetterLimelight();
+        this.poseEstimator = new SwerveDrivePoseEstimator(
+                kinematics,
+                gyro.getRotation2d(),
                 new SwerveModulePosition[]{
                         frontLeft.getPosition(),
                         frontRight.getPosition(),
                         backLeft.getPosition(),
                         backRight.getPosition()
                 },
-                new Pose2d()); // @TODO check start position
-        limelight = new TheBetterLimelight();
+                new Pose2d());
     }
 
     @Override
     public void periodic() {
         super.periodic();
-        estimatedVisionPose = limelight.getRobotPose().toPose2d();
-        targetingLatency = limelight.getValue("tl");
-        captureLatency = limelight.getValue("cl");
-        if (estimatedVisionPose != null) {
-            poseEstimator.addVisionMeasurement(estimatedVisionPose,
+        NetworkTableValue targetingLatency = limelight.getValue("tl");
+        NetworkTableValue captureLatency = limelight.getValue("cl");
+        if (limelight.hasTarget()) {
+            poseEstimator.addVisionMeasurement(limelight.getRobotPose().toPose2d(),
                     Timer.getFPGATimestamp() - (targetingLatency.getDouble() / 1000.0) -
                             (captureLatency.getDouble() / 1000.0));
         }
-        poseEstimator.update(gyro.getRotation2d(), new SwerveModulePosition[]{
-                frontLeft.getPosition(),
-                frontRight.getPosition(),
-                backLeft.getPosition(),
-                backRight.getPosition()
-        });
+        poseEstimator.update(
+                gyro.getRotation2d(),
+                new SwerveModulePosition[]{
+                        frontLeft.getPosition(),
+                        frontRight.getPosition(),
+                        backLeft.getPosition(),
+                        backRight.getPosition()
+                });
     }
 
     public void drive(Supplier<Double> xSpeed, Supplier<Double> ySpeed, Supplier<Double> rotationSpeed,
@@ -88,7 +89,7 @@ public class DrivetrainImpl extends DashboardedSubsystem implements Drivetrain {
         ChassisSpeeds speeds;
         if (fieldRelative) {
             speeds = ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed.get(), ySpeed.get(),
-                    rotationSpeed.get(), estimatedVisionPose.getRotation());
+                    rotationSpeed.get(), poseEstimator.getEstimatedPosition().getRotation());
         } else {
             speeds = new ChassisSpeeds(xSpeed.get(), ySpeed.get(), rotationSpeed.get());
         }
@@ -102,6 +103,27 @@ public class DrivetrainImpl extends DashboardedSubsystem implements Drivetrain {
 
     public void resetGyro() {
         gyro.reset();
+    }
+
+    /**
+     * Resets the position to the position obtained from the vision source, or the given position if there is no
+     * {@link AprilTag} target.
+     *
+     * @param noTargetPosition the position to reset the estimator to if there is no information from the vision source.
+     * @TODO add to {@link frc.robot.Robot}
+     */
+    @Override
+    public void resetPoseEstimator(Pose2d noTargetPosition) {
+        poseEstimator.resetPosition(
+                gyro.getRotation2d(),
+                new SwerveModulePosition[]{
+                        frontLeft.getPosition(),
+                        frontRight.getPosition(),
+                        backLeft.getPosition(),
+                        backRight.getPosition()
+                },
+                limelight.hasTarget() ? limelight.getRobotPose().toPose2d() : noTargetPosition
+        );
     }
 
     @Override

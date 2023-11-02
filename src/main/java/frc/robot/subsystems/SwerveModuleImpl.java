@@ -17,7 +17,10 @@ public class SwerveModuleImpl extends DashboardedSubsystem implements SwerveModu
     private static final int PID_SLOT = 0;
     private static final double STEERING_GEAR_RATIO = 12.8;
     private static final double DRIVING_GEAR_RATIO = 6.12;
-    private static final double WHEEL_CIRCUMFERENCE_METERS = 4*2.54*0.01*Math.PI;
+
+    private static final double WHEEL_DIAMETER_IN_INCHES = 4;
+    private static final double INCHES_TO_METERS = 0.0254;
+    private static final double WHEEL_CIRCUMFERENCE_METERS = WHEEL_DIAMETER_IN_INCHES*INCHES_TO_METERS*Math.PI;
     private final CANSparkMax driveController;
     private final CANSparkMax turnController;
     private final CANCoder absoluteEncoder;
@@ -49,7 +52,7 @@ public class SwerveModuleImpl extends DashboardedSubsystem implements SwerveModu
         driveController.getPIDController().setP(drivePIDSettings.getkP());
         driveController.getPIDController().setI(drivePIDSettings.getkI());
         driveController.getPIDController().setD(drivePIDSettings.getkD());
-        driveController.getEncoder().setPositionConversionFactor((1/DRIVING_GEAR_RATIO)*WHEEL_CIRCUMFERENCE_METERS);
+        driveController.getEncoder().setPositionConversionFactor((1 / DRIVING_GEAR_RATIO) * WHEEL_CIRCUMFERENCE_METERS);
     }
 
     private void configureTurnController() {
@@ -92,8 +95,7 @@ public class SwerveModuleImpl extends DashboardedSubsystem implements SwerveModu
             double feedForward = driveFeedForwardController.calculate(speed);
             driveController.getPIDController().setReference(speed, CANSparkMax.ControlType.kVelocity, PID_SLOT,
                     feedForward);
-        }
-        else driveController.set(speed / DrivetrainImpl.MAX_SPEED);
+        } else driveController.set(speed / DrivetrainImpl.MAX_SPEED);
     }
 
     @Override
@@ -128,7 +130,7 @@ public class SwerveModuleImpl extends DashboardedSubsystem implements SwerveModu
         double targetAngle = placeInAppropriate0To360Scope(currentAngle.getDegrees(), desiredState.angle.getDegrees());
         double targetSpeed = desiredState.speedMetersPerSecond;
         double delta = targetAngle - currentAngle.getDegrees();
-        if (Math.abs(delta) > 90){
+        if (Math.abs(delta) > 90) {
             targetSpeed = -targetSpeed;
             targetAngle = delta > 90 ? (targetAngle -= 180) : (targetAngle += 180);
         }
@@ -137,7 +139,7 @@ public class SwerveModuleImpl extends DashboardedSubsystem implements SwerveModu
 
     /**
      * @param scopeReference Current Angle
-     * @param newAngle Target Angle
+     * @param newAngle       Target Angle
      * @return Closest angle within scope
      */
     private static double placeInAppropriate0To360Scope(double scopeReference, double newAngle) {

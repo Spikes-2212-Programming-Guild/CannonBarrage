@@ -122,7 +122,7 @@ public class SwerveModuleImpl extends DashboardedSubsystem implements SwerveModu
      * @param desiredState The desired state.
      * @param currentAngle The current module angle.
      */
-    private static SwerveModuleState optimize(SwerveModuleState desiredState, Rotation2d currentAngle) {
+    private SwerveModuleState optimize(SwerveModuleState desiredState, Rotation2d currentAngle) {
         double targetAngle = placeInAppropriate0To360Scope(currentAngle.getDegrees(), desiredState.angle.getDegrees());
         double targetSpeed = desiredState.speedMetersPerSecond;
         double delta = targetAngle - currentAngle.getDegrees();
@@ -138,7 +138,7 @@ public class SwerveModuleImpl extends DashboardedSubsystem implements SwerveModu
      * @param newAngle       Target Angle
      * @return Closest angle within scope
      */
-    private static double placeInAppropriate0To360Scope(double scopeReference, double newAngle) {
+    private double placeInAppropriate0To360Scope(double scopeReference, double newAngle) {
         double lowerBound;
         double upperBound;
         double lowerOffset = scopeReference % 360;

@@ -17,10 +17,10 @@ public class SwerveModuleImpl extends DashboardedSubsystem implements SwerveModu
     private static final int PID_SLOT = 0;
     private static final double STEERING_GEAR_RATIO = 12.8;
     private static final double DRIVING_GEAR_RATIO = 6.12;
-
     private static final double WHEEL_DIAMETER_IN_INCHES = 4;
     private static final double INCHES_TO_METERS = 0.0254;
     private static final double WHEEL_CIRCUMFERENCE_METERS = WHEEL_DIAMETER_IN_INCHES*INCHES_TO_METERS*Math.PI;
+
     private final CANSparkMax driveController;
     private final CANSparkMax turnController;
     private final CANCoder absoluteEncoder;
@@ -48,6 +48,28 @@ public class SwerveModuleImpl extends DashboardedSubsystem implements SwerveModu
         configureRelativeEncoder();
     }
 
+    @Override
+    public double getAbsoluteAngle() {
+        return absoluteEncoder.getAbsolutePosition();
+    }
+
+    public double getRelativeAngle() {
+        return turnController.getEncoder().getPosition();
+    }
+
+    @Override
+    public SwerveModulePosition getPosition() {
+        return new SwerveModulePosition(driveController.getEncoder().getPosition(),
+                Rotation2d.fromDegrees(getAbsoluteAngle()));
+    }
+
+    @Override
+    public void set(SwerveModuleState state, boolean usePID) {
+        state = optimize(state, Rotation2d.fromDegrees(getRelativeAngle()));
+        setAngle(state.angle.getDegrees());
+        setSpeed(state.speedMetersPerSecond, usePID);
+    }
+
     private void configureDriveController() {
         driveController.getPIDController().setP(drivePIDSettings.getkP());
         driveController.getPIDController().setI(drivePIDSettings.getkI());
@@ -73,13 +95,6 @@ public class SwerveModuleImpl extends DashboardedSubsystem implements SwerveModu
         turnController.getEncoder().setPosition(getAbsoluteAngle());
     }
 
-    @Override
-    public void set(SwerveModuleState state, boolean usePID) {
-        state = optimize(state, Rotation2d.fromDegrees(getRelativeAngle()));
-        setAngle(state.angle.getDegrees());
-        setSpeed(state.speedMetersPerSecond, usePID);
-    }
-
     //angle between 0 and 360
     private void setAngle(double angle) {
         configureTurnController();
@@ -96,25 +111,6 @@ public class SwerveModuleImpl extends DashboardedSubsystem implements SwerveModu
             driveController.getPIDController().setReference(speed, CANSparkMax.ControlType.kVelocity, PID_SLOT,
                     feedForward);
         } else driveController.set(speed / DrivetrainImpl.MAX_SPEED);
-    }
-
-    @Override
-    public double getAbsoluteAngle() {
-        return absoluteEncoder.getAbsolutePosition();
-    }
-
-    public double getRelativeAngle() {
-        return turnController.getEncoder().getPosition();
-    }
-
-    @Override
-    public void configureDashboard() {
-    }
-
-    @Override
-    public SwerveModulePosition getPosition() {
-        return new SwerveModulePosition(driveController.getEncoder().getPosition(),
-                Rotation2d.fromDegrees(getAbsoluteAngle()));
     }
 
     /**
@@ -165,5 +161,9 @@ public class SwerveModuleImpl extends DashboardedSubsystem implements SwerveModu
             newAngle += 360;
         }
         return newAngle;
+    }
+
+    @Override
+    public void configureDashboard() {
     }
 }

@@ -46,6 +46,7 @@ public class SwerveModuleImpl extends DashboardedSubsystem implements SwerveModu
         configureTurnController();
         configureAbsoluteEncoder();
         configureRelativeEncoder();
+        configureDashboard();
     }
 
     @Override

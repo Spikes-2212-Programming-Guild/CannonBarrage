@@ -35,6 +35,8 @@ public class SwerveModuleImpl extends DashboardedSubsystem implements SwerveModu
     private final PIDSettings drivePIDSettings;
     private final PIDSettings turnPIDSettings;
 
+    private double lastAngle;
+
     public SwerveModuleImpl(String namespaceName, CANSparkMax driveController, CANSparkMax turnController,
                             CANCoder absoluteEncoder, double offset, FeedForwardSettings driveFeedForwardSettings,
                             PIDSettings drivePIDSettings, PIDSettings turnPIDSettings) {
@@ -47,6 +49,7 @@ public class SwerveModuleImpl extends DashboardedSubsystem implements SwerveModu
         this.drivePIDSettings = drivePIDSettings;
         this.turnPIDSettings = turnPIDSettings;
         this.driveFeedForwardController = new FeedForwardController(driveFeedForwardSettings, FeedForwardController.DEFAULT_PERIOD);
+        lastAngle = getAbsoluteAngle();
         configureDriveController();
         configureTurnController();
         configureAbsoluteEncoder();
@@ -71,8 +74,10 @@ public class SwerveModuleImpl extends DashboardedSubsystem implements SwerveModu
 
     @Override
     public void set(SwerveModuleState state, boolean usePID) {
+        double angle = (Math.abs(state.speedMetersPerSecond) <= (DrivetrainImpl.MAX_SPEED * 0.01))
+                ? lastAngle : state.angle.getDegrees();
         state = optimize(state, Rotation2d.fromDegrees(getRelativeAngle()));
-        setAngle(state.angle.getDegrees());
+        setAngle(angle);
         setSpeed(state.speedMetersPerSecond, usePID);
     }
 

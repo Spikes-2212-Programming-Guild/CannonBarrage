@@ -13,7 +13,7 @@ import java.util.function.Supplier;
 public class Shoot extends SequentialCommandGroup {
 
     public Shoot(Shooter shooter, Hood hood, ShootingConfig shootingConfig) {
-        addRequirements(shooter);
+        addRequirements(shooter, hood);
         addCommands(new MoveSmartMotorControllerSubsystemTrapezically(hood, hood.getPIDSettings(),
                         hood.getFeedForwardSettings(),
                         () -> shootingConfig.hoodPosition, hood.getTrapezoidProfileSettings()),

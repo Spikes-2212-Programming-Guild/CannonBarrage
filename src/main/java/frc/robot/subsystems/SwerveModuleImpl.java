@@ -14,6 +14,11 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 
 public class SwerveModuleImpl extends DashboardedSubsystem implements SwerveModule {
 
+    public static final double FRONT_LEFT_OFFSET = 0;
+    public static final double FRONT_RIGHT_OFFSET = 0;
+    public static final double BACK_LEFT_OFFSET = 0;
+    public static final double BACK_RIGHT_OFFSET = 0;
+
     private static final int PID_SLOT = 0;
     private static final double STEERING_GEAR_RATIO = 12.8;
     private static final double DRIVING_GEAR_RATIO = 6.12;

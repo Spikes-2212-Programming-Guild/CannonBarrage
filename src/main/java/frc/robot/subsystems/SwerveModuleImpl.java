@@ -81,6 +81,8 @@ public class SwerveModuleImpl extends DashboardedSubsystem implements SwerveModu
         driveController.getPIDController().setI(drivePIDSettings.getkI());
         driveController.getPIDController().setD(drivePIDSettings.getkD());
         driveController.getEncoder().setPositionConversionFactor((1 / DRIVING_GEAR_RATIO) * WHEEL_CIRCUMFERENCE_METERS);
+        driveController.getEncoder().setVelocityConversionFactor(
+                ((1 / DRIVING_GEAR_RATIO) * WHEEL_CIRCUMFERENCE_METERS) / 60);
     }
 
     private void configureTurnController() {

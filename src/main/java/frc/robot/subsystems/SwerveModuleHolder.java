@@ -38,12 +38,12 @@ public class SwerveModuleHolder {
     private final PIDSettings turnPIDSettings =
             new PIDSettings(kPTurn, kITurn, kDTurn, turnTolerance, turnWaitTime);
 
-    private static SwerveModuleImpl frontLeft;
-    private static SwerveModuleImpl frontRight;
-    private static SwerveModuleImpl backLeft;
-    private static SwerveModuleImpl backRight;
+    private static SwerveModule frontLeft;
+    private static SwerveModule frontRight;
+    private static SwerveModule backLeft;
+    private static SwerveModule backRight;
 
-    public SwerveModuleImpl getFrontLeft() {
+    public SwerveModule getFrontLeft() {
         if (frontLeft == null) {
             frontLeft = new SwerveModuleImpl("front left",
                     new CANSparkMax(RobotMap.CAN.FRONT_LEFT_DRIVE_SPARKMAX, CANSparkMaxLowLevel.MotorType.kBrushless),
@@ -54,7 +54,7 @@ public class SwerveModuleHolder {
         return frontLeft;
     }
 
-    public SwerveModuleImpl getFrontRight() {
+    public SwerveModule getFrontRight() {
         if (frontRight == null) {
             frontRight = new SwerveModuleImpl("front right",
                     new CANSparkMax(RobotMap.CAN.FRONT_RIGHT_DRIVE_SPARKMAX, CANSparkMaxLowLevel.MotorType.kBrushless),
@@ -65,7 +65,7 @@ public class SwerveModuleHolder {
         return frontRight;
     }
 
-    public SwerveModuleImpl getBackLeft() {
+    public SwerveModule getBackLeft() {
         if (backLeft == null) {
             backLeft = new SwerveModuleImpl("back left",
                     new CANSparkMax(RobotMap.CAN.BACK_LEFT_DRIVE_SPARKMAX, CANSparkMaxLowLevel.MotorType.kBrushless),
@@ -76,7 +76,7 @@ public class SwerveModuleHolder {
         return backLeft;
     }
 
-    public SwerveModuleImpl getBackRight() {
+    public SwerveModule getBackRight() {
         if (backRight == null) {
             backRight = new SwerveModuleImpl("back right",
                     new CANSparkMax(RobotMap.CAN.BACK_RIGHT_DRIVE_SPARKMAX, CANSparkMaxLowLevel.MotorType.kBrushless),

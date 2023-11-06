@@ -99,7 +99,7 @@ public class SwerveModuleImpl extends DashboardedSubsystem implements SwerveModu
     }
 
     private void configureRelativeEncoder() {
-        turnController.getEncoder().setPositionConversionFactor((1 / STEERING_GEAR_RATIO) * 180);
+        turnController.getEncoder().setPositionConversionFactor((1 / STEERING_GEAR_RATIO) * 360);
         turnController.getEncoder().setPosition(getAbsoluteAngle());
     }
 

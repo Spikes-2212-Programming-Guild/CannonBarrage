@@ -142,6 +142,7 @@ public class SwerveModuleImpl extends DashboardedSubsystem implements SwerveModu
     }
 
     /**
+     * Takes the module's angle and the desired angle, and returns it in within the range of 0 to 360.
      * @param scopeReference Current Angle
      * @param newAngle       Target Angle
      * @return Closest angle within scope

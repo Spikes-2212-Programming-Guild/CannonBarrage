@@ -59,7 +59,7 @@ public class SwerveModuleImpl extends DashboardedSubsystem implements SwerveModu
         return absoluteEncoder.getAbsolutePosition();
     }
 
-    public double getRelativeAngle() {
+    private double getRelativeAngle() {
         return turnController.getEncoder().getPosition();
     }
 

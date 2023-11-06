@@ -8,8 +8,6 @@ import frc.robot.ShootingConfig;
 import frc.robot.subsystems.Hood;
 import frc.robot.subsystems.Shooter;
 
-import java.util.function.Supplier;
-
 public class Shoot extends SequentialCommandGroup {
 
     public Shoot(Shooter shooter, Hood hood, ShootingConfig shootingConfig) {

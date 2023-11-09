@@ -1,20 +1,15 @@
 package frc.robot.subsystems;
 
-import com.spikes2212.command.DashboardedSubsystem;
-import com.spikes2212.dashboard.Namespace;
+import edu.wpi.first.wpilibj2.command.Subsystem;
 
 import java.util.function.Supplier;
 
-public abstract class SwerveDrivetrain extends DashboardedSubsystem {
+public interface SwerveDrivetrain extends Subsystem {
 
-    public SwerveDrivetrain(Namespace namespace) {
-        super(namespace);
-    }
-
-    public abstract void drive(Supplier<Double> xSpeed, Supplier<Double> ySpeed, Supplier<Double> rotationSpeed,
+    void drive(Supplier<Double> xSpeed, Supplier<Double> ySpeed, Supplier<Double> rotationSpeed,
                boolean fieldRelative, boolean usePID);
 
-    public abstract void stop();
+    void stop();
 
-    public abstract void resetGyro();
+    void resetGyro();
 }

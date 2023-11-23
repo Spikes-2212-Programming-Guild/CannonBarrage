@@ -4,6 +4,7 @@ import com.ctre.phoenix.sensors.AbsoluteSensorRange;
 import com.ctre.phoenix.sensors.CANCoder;
 import com.ctre.phoenix.sensors.SensorInitializationStrategy;
 import com.revrobotics.CANSparkMax;
+import com.revrobotics.RelativeEncoder;
 import com.spikes2212.command.DashboardedSubsystem;
 import com.spikes2212.control.FeedForwardController;
 import com.spikes2212.control.FeedForwardSettings;
@@ -35,6 +36,9 @@ public class SwerveModuleImpl extends DashboardedSubsystem implements SwerveModu
     private final PIDSettings drivePIDSettings;
     private final PIDSettings turnPIDSettings;
 
+    private final RelativeEncoder driveEncoder;
+    private final RelativeEncoder turnEncoder;
+
     private double lastAngle;
 
     public SwerveModuleImpl(String namespaceName, CANSparkMax driveController, CANSparkMax turnController,
@@ -48,7 +52,10 @@ public class SwerveModuleImpl extends DashboardedSubsystem implements SwerveModu
         this.driveFeedForwardSettings = driveFeedForwardSettings;
         this.drivePIDSettings = drivePIDSettings;
         this.turnPIDSettings = turnPIDSettings;
-        this.driveFeedForwardController = new FeedForwardController(driveFeedForwardSettings, FeedForwardController.DEFAULT_PERIOD);
+        this.driveFeedForwardController = new FeedForwardController(driveFeedForwardSettings,
+                FeedForwardController.DEFAULT_PERIOD);
+        driveEncoder = driveController.getEncoder();
+        turnEncoder = turnController.getEncoder();
         lastAngle = getAbsoluteAngle();
         configureDriveController();
         configureTurnController();
@@ -63,12 +70,12 @@ public class SwerveModuleImpl extends DashboardedSubsystem implements SwerveModu
     }
 
     private double getRelativeAngle() {
-        return turnController.getEncoder().getPosition();
+        return turnEncoder.getPosition();
     }
 
     @Override
     public SwerveModulePosition getPosition() {
-        return new SwerveModulePosition(driveController.getEncoder().getPosition(),
+        return new SwerveModulePosition(driveEncoder.getPosition(),
                 Rotation2d.fromDegrees(getAbsoluteAngle()));
     }
 
@@ -85,8 +92,8 @@ public class SwerveModuleImpl extends DashboardedSubsystem implements SwerveModu
         driveController.getPIDController().setP(drivePIDSettings.getkP());
         driveController.getPIDController().setI(drivePIDSettings.getkI());
         driveController.getPIDController().setD(drivePIDSettings.getkD());
-        driveController.getEncoder().setPositionConversionFactor((1 / DRIVING_GEAR_RATIO) * WHEEL_CIRCUMFERENCE_METERS);
-        driveController.getEncoder().setVelocityConversionFactor(
+        driveEncoder.setPositionConversionFactor((1 / DRIVING_GEAR_RATIO) * WHEEL_CIRCUMFERENCE_METERS);
+        driveEncoder.setVelocityConversionFactor(
                 ((1 / DRIVING_GEAR_RATIO) * WHEEL_CIRCUMFERENCE_METERS) / 60);
     }
 
@@ -132,8 +139,8 @@ public class SwerveModuleImpl extends DashboardedSubsystem implements SwerveModu
      * in appropriate scope for CTRE onboard control.
      * Credit to team #364
      *
-     * @param desiredState The desired state.
-     * @param currentAngle The current module angle.
+     * @param desiredState the desired state
+     * @param currentAngle the current module angle
      */
     private SwerveModuleState optimize(SwerveModuleState desiredState, Rotation2d currentAngle) {
         double targetAngle = placeInAppropriate0To360Scope(currentAngle.getDegrees(), desiredState.angle.getDegrees());
@@ -148,9 +155,11 @@ public class SwerveModuleImpl extends DashboardedSubsystem implements SwerveModu
 
     /**
      * Takes the module's angle and the desired angle, and returns it in within the range of 0 to 360.
-     * @param scopeReference Current Angle
-     * @param newAngle       Target Angle
-     * @return Closest angle within scope
+     * Credit to team #364.
+     *
+     * @param scopeReference current angle
+     * @param newAngle       target angle
+     * @return closest angle within scope
      */
     private double placeInAppropriate0To360Scope(double scopeReference, double newAngle) {
         double lowerBound;
@@ -179,5 +188,8 @@ public class SwerveModuleImpl extends DashboardedSubsystem implements SwerveModu
 
     @Override
     public void configureDashboard() {
+        namespace.putNumber("velocity", driveEncoder.getVelocity());
+        namespace.putNumber("distance", driveEncoder.getPosition());
+        namespace.putNumber("angle", getAbsoluteAngle());
     }
 }

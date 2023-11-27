@@ -11,7 +11,10 @@ public class RobotMap {
     }
     
     public interface PWM {
-
+        int LEFT_SOLENOID_INTAKE_PORT_1 = -1;
+        int LEFT_SOLENOID_INTAKE_PORT_2 = -1;
+        int RIGHT_SOLENOID_INTAKE_PORT_1 = -1;
+        int RIGHT_SOLENOID_INTAKE_PORT_2 = -1;
     }
     
     public interface AIN {

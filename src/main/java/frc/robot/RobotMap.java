@@ -4,9 +4,9 @@ public class RobotMap {
 
     public interface CAN {
 
-        int FRONT_LEFT_DRIVE_SPARKMAX = -1;
-        int FRONT_LEFT_TURN_SPARKMAX = -1;
-        int FRONT_LEFT_ABSOLUTE_ENCODER = -1;
+        int FRONT_LEFT_DRIVE_SPARKMAX = 2;
+        int FRONT_LEFT_TURN_SPARKMAX = 1;
+        int FRONT_LEFT_ABSOLUTE_ENCODER = 3;
 
         int FRONT_RIGHT_DRIVE_SPARKMAX = -1;
         int FRONT_RIGHT_TURN_SPARKMAX = -1;

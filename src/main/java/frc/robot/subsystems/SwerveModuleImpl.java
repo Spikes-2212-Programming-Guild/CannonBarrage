@@ -9,16 +9,26 @@ import com.spikes2212.command.DashboardedSubsystem;
 import com.spikes2212.control.FeedForwardController;
 import com.spikes2212.control.FeedForwardSettings;
 import com.spikes2212.control.PIDSettings;
+import com.spikes2212.dashboard.RootNamespace;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
+
+import java.util.function.Supplier;
 
 public class SwerveModuleImpl extends DashboardedSubsystem implements SwerveModule {
 
-    public static final double FRONT_LEFT_OFFSET = 0;
-    public static final double FRONT_RIGHT_OFFSET = 0;
-    public static final double BACK_LEFT_OFFSET = 0;
-    public static final double BACK_RIGHT_OFFSET = 0;
+    private static final RootNamespace offsetNamespace = new RootNamespace("module offsets");
+
+    public static final Supplier<Double> FRONT_LEFT_OFFSET = offsetNamespace.addConstantDouble("front left offset",
+            -201.98);
+    public static final Supplier<Double> FRONT_RIGHT_OFFSET = offsetNamespace.addConstantDouble("front right offset",
+            0);
+    public static final Supplier<Double> BACK_LEFT_OFFSET = offsetNamespace.addConstantDouble("back left offset",
+            0);
+    public static final Supplier<Double> BACK_RIGHT_OFFSET = offsetNamespace.addConstantDouble("back right offset",
+            0);
 
     private static final int PID_SLOT = 0;
     private static final double STEERING_GEAR_RATIO = 12.8;
@@ -30,7 +40,7 @@ public class SwerveModuleImpl extends DashboardedSubsystem implements SwerveModu
     private final CANSparkMax driveController;
     private final CANSparkMax turnController;
     private final CANCoder absoluteEncoder;
-    private final double offset;
+    private final Supplier<Double> offset;
     private final FeedForwardController driveFeedForwardController;
     private final FeedForwardSettings driveFeedForwardSettings;
     private final PIDSettings drivePIDSettings;
@@ -42,7 +52,7 @@ public class SwerveModuleImpl extends DashboardedSubsystem implements SwerveModu
     private double lastAngle;
 
     public SwerveModuleImpl(String namespaceName, CANSparkMax driveController, CANSparkMax turnController,
-                            CANCoder absoluteEncoder, double offset, FeedForwardSettings driveFeedForwardSettings,
+                            CANCoder absoluteEncoder, Supplier<Double> offset, FeedForwardSettings driveFeedForwardSettings,
                             PIDSettings drivePIDSettings, PIDSettings turnPIDSettings) {
         super(namespaceName);
         this.driveController = driveController;
@@ -105,20 +115,24 @@ public class SwerveModuleImpl extends DashboardedSubsystem implements SwerveModu
 
     private void configureAbsoluteEncoder() {
         absoluteEncoder.configFactoryDefault();
-        absoluteEncoder.configMagnetOffset(offset);
+        absoluteEncoder.configMagnetOffset(offset.get());
         absoluteEncoder.configAbsoluteSensorRange(AbsoluteSensorRange.Unsigned_0_to_360);
         absoluteEncoder.configSensorInitializationStrategy(SensorInitializationStrategy.BootToAbsolutePosition);
+        absoluteEncoder.configSensorDirection(true);
     }
 
-    private void configureRelativeEncoder() {
-        turnController.getEncoder().setPositionConversionFactor((1 / STEERING_GEAR_RATIO) * 360);
-        turnController.getEncoder().setPosition(getAbsoluteAngle());
+    public void configureRelativeEncoder() {
+        turnEncoder.setPositionConversionFactor((1 / STEERING_GEAR_RATIO) * 360);
+//        turnController.getEncoder().setPositionConversionFactor(1);
+        turnEncoder.setPosition(getAbsoluteAngle());
+//        turnController.getEncoder().setPosition(0);
     }
 
     //angle between 0 and 360
     private void setAngle(double angle) {
         configureTurnController();
         turnController.getPIDController().setReference(angle, CANSparkMax.ControlType.kPosition, PID_SLOT);
+        lastAngle = angle;
     }
 
     //speed - m/s
@@ -190,6 +204,8 @@ public class SwerveModuleImpl extends DashboardedSubsystem implements SwerveModu
     public void configureDashboard() {
         namespace.putNumber("velocity", driveEncoder.getVelocity());
         namespace.putNumber("distance", driveEncoder.getPosition());
-        namespace.putNumber("angle", getAbsoluteAngle());
+        namespace.putNumber("absolute angle", this::getAbsoluteAngle);
+        namespace.putNumber("relative angle", this::getRelativeAngle);
+        namespace.putData("reset angle", new InstantCommand(this::configureRelativeEncoder).ignoringDisable(true));
     }
 }
